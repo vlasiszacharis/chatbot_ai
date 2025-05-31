@@ -1,118 +1,261 @@
-import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, FlatList } from "react-native";
+import React, { useState, useRef } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  FlatList,
+  Animated,
+  Dimensions,
+  SafeAreaView,
+  ActivityIndicator,
+} from "react-native";
 import { v4 as uuidv4 } from "uuid";
+import { Ionicons } from "@expo/vector-icons";
 
-export default function ChatScreen() {
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
+const SIDEBAR_WIDTH = Math.min(SCREEN_WIDTH * 0.75, 300);
+
+const API_URL = "";
+
+export default function ChatScreen({ navigation, route }) {
+  const { userName = "", userSurname = "", sessionId = "my_test_session_123" } = route.params || {};
+  const displayName = userName && userSurname ? `${userName} ${userSurname}` : "Εσείς";
+
   const [messages, setMessages] = useState([
-    { id: uuidv4(), text: "Welcome to the Theater Box Office!", sender: "bot" },
-    { id: uuidv4(), text: "How can I help you today?", sender: "bot" },
+    { id: uuidv4(), text: "Καλώς ήρθατε στο Θέατρο", sender: "bot", timestamp: new Date() },
+    { id: uuidv4(), text: "Πώς μπορώ να σας βοηθήσω;", sender: "bot", timestamp: new Date() },
   ]);
   const [input, setInput] = useState("");
+  const [sending, setSending] = useState(false);
+  const [sidebarVisible, setSidebarVisible] = useState(false);
+  const sidebarX = useRef(new Animated.Value(-SCREEN_WIDTH)).current;
 
-  //NOTE - Ai integration - dummy for now
-  const getAIResponse = (userMessage) => {
-    const lowerCaseMessage = userMessage.toLowerCase();
-    if (lowerCaseMessage.includes("book")) {
-      return "Sure, let’s book your tickets now!";
-    } else if (lowerCaseMessage.includes("hello")) {
-      return "Hello! How can I help you today?";
-    } else if (lowerCaseMessage.includes("bye")) {
-      return "Goodbye! Hope to see you soon.";
-    } else {
-      return "I'm sorry, I didn't understand. Could you try again?";
+  const toggleSidebar = (show) => {
+    Animated.timing(sidebarX, {
+      toValue: show ? 0 : -SCREEN_WIDTH,
+      duration: 250,
+      useNativeDriver: true,
+    }).start(() => setSidebarVisible(show));
+  };
+
+  const sendMessage = async () => {
+    if (!input.trim() || sending) return;
+    const text = input.trim();
+    const now = new Date();
+    setMessages((m) => [...m, { id: uuidv4(), text, sender: "user", timestamp: now }]);
+    setInput("");
+    setSending(true);
+    try {
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          session_id: sessionId,
+          message: text,
+        }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const { reply } = await res.json();
+      setMessages((m) => [...m, { id: uuidv4(), text: reply, sender: "bot", timestamp: new Date() }]);
+    } catch {
+      setMessages((m) => [...m, { id: uuidv4(), text: "Σφάλμα σύνδεσης.", sender: "bot", timestamp: new Date() }]);
+    } finally {
+      setSending(false);
     }
   };
 
-  const sendMessage = () => {
-    if (input.trim() !== "") {
-      const userMsg = {
-        id: uuidv4(),
-        text: input.trim(),
-        sender: "user",
-      };
-      const aiMsg = {
-        id: uuidv4(),
-        text: getAIResponse(input.trim()),
-        sender: "bot",
-      };
-
-      setMessages((prevMessages) => [...prevMessages, userMsg, aiMsg]);
-      setInput("");
-    }
+  const formatTime = (date) => {
+    const h = date.getHours().toString().padStart(2, "0");
+    const m = date.getMinutes().toString().padStart(2, "0");
+    return `${h}:${m}`;
   };
 
-  const renderItem = ({ item }) => {
-    const isUser = item.sender === "user";
-    return (
-      <View style={[styles.messageBubble, isUser ? styles.userBubble : styles.botBubble]}>
-        <Text style={styles.messageText}>{item.text}</Text>
-      </View>
-    );
-  };
+  const menuItems = [
+    { label: "Πληροφορίες", icon: "information-circle-outline", to: "BookTickets" },
+    { label: "Εισιτήρια", icon: "ticket-outline", to: "BookingDetails" },
+    { label: "Επικοινωνία", icon: "call-outline", to: "TheaterContact" },
+  ];
 
   return (
-    <View style={styles.container}>
-      <FlatList data={messages} renderItem={renderItem} keyExtractor={(item) => item.id} style={styles.chatContainer} />
-      <View style={styles.inputContainer}>
-        <TextInput style={styles.textInput} value={input} onChangeText={setInput} placeholder="Type your message here..." />
-        <TouchableOpacity style={styles.sendButton} onPress={sendMessage}>
-          <Text style={styles.sendButtonText}>Send</Text>
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.topBar}>
+        <TouchableOpacity onPress={() => toggleSidebar(true)} style={styles.topIcon}>
+          <Ionicons name="menu" size={28} color="#000" />
         </TouchableOpacity>
+        <Text style={styles.topTitle}>Συνομιλία</Text>
+        <View style={styles.topIconPlaceholder} />
       </View>
-    </View>
+
+      {!sidebarVisible && (
+        <View style={styles.chatArea}>
+          <FlatList
+            data={messages}
+            renderItem={({ item }) => (
+              <View style={styles.messageContainer}>
+                <View style={styles.messageHeader}>
+                  {item.sender === "bot" ? (
+                    <View style={styles.botHeaderLeft}>
+                      <Text style={styles.botTitle}>Bot</Text>
+                    </View>
+                  ) : (
+                    <Text style={styles.userName}>{displayName}</Text>
+                  )}
+                  <Text style={styles.timeText}>{formatTime(item.timestamp)}</Text>
+                </View>
+                <View style={[styles.bubble, item.sender === "user" ? styles.userBubble : styles.botBubble]}>
+                  <Text style={styles.bubbleText}>{item.text}</Text>
+                </View>
+              </View>
+            )}
+            keyExtractor={(i) => i.id}
+            contentContainerStyle={styles.chatList}
+          />
+          <View style={styles.inputRow}>
+            <TextInput
+              style={styles.input}
+              value={input}
+              onChangeText={setInput}
+              placeholder="Πληκτρολογήστε μήνυμα..."
+              editable={!sending}
+            />
+            <TouchableOpacity style={styles.sendBtn} onPress={sendMessage} disabled={sending}>
+              {sending ? <ActivityIndicator color="#5664F5" /> : <Ionicons name="send" size={20} color="#5664F5" />}
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
+
+      <Animated.View
+        style={[styles.overlay, { opacity: sidebarX.interpolate({ inputRange: [-SCREEN_WIDTH, 0], outputRange: [0, 0.4] }) }]}
+        pointerEvents={sidebarVisible ? "auto" : "none"}
+      >
+        <TouchableOpacity style={{ flex: 1 }} onPress={() => toggleSidebar(false)} />
+      </Animated.View>
+
+      <Animated.View style={[styles.sidebar, { transform: [{ translateX: sidebarX }] }]}>
+        <View style={styles.sidebarHeader}>
+          <TouchableOpacity onPress={() => toggleSidebar(false)} style={styles.closeBtn}>
+            <Ionicons name="close" size={28} color="black" />
+          </TouchableOpacity>
+        </View>
+        <View style={styles.divider} />
+        {menuItems.map(({ label, icon, to }, idx) => (
+          <TouchableOpacity
+            key={to}
+            style={[styles.menuItem, { marginTop: idx === 0 ? 32 : 24 }]}
+            onPress={() => {
+              toggleSidebar(false);
+              navigation.navigate(to);
+            }}
+          >
+            <Ionicons name={icon} size={24} color="#5664F5" style={styles.menuIcon} />
+            <Text style={styles.menuText}>{label}</Text>
+          </TouchableOpacity>
+        ))}
+      </Animated.View>
+    </SafeAreaView>
   );
 }
 
-//Styles
-
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
+  safeArea: { flex: 1, backgroundColor: "#f5f5f5" },
+  topBar: {
+    height: 56,
+    flexDirection: "row",
+    alignItems: "center",
+    borderBottomWidth: 1,
+    borderColor: "#ccc",
+    backgroundColor: "#fff",
   },
-  chatContainer: {
-    flex: 1,
-    padding: 16,
+  topIcon: { width: 56, alignItems: "center", justifyContent: "center" },
+  topTitle: { flex: 1, textAlign: "center", fontSize: 20, fontWeight: "600" },
+  topIconPlaceholder: { width: 56 },
+
+  chatArea: { flex: 1, height: SCREEN_HEIGHT * 0.9 },
+  chatList: { padding: 16 },
+
+  messageContainer: { marginBottom: 12 },
+  messageHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginHorizontal: 8,
+    marginBottom: 4,
   },
-  messageBubble: {
-    borderRadius: 8,
-    padding: 10,
-    marginVertical: 4,
-    maxWidth: "80%",
-    alignSelf: "flex-start",
-  },
-  userBubble: {
-    backgroundColor: "#E5E7EB",
-    alignSelf: "flex-end",
-  },
-  botBubble: {
-    backgroundColor: "#2563EB",
-  },
-  messageText: {
-    color: "#fff",
-  },
-  inputContainer: {
+  botHeaderLeft: { flexDirection: "row", alignItems: "center" },
+  robotIcon: { marginRight: 6 },
+  botTitle: { fontWeight: "bold", color: "#5664F5", marginRight: 8 },
+  userName: { fontWeight: "bold", color: "#333" },
+  timeText: { color: "#999", fontSize: 12 },
+
+  bubble: { borderRadius: 12, padding: 12, maxWidth: "75%" },
+  userBubble: { backgroundColor: "#000", alignSelf: "flex-end" },
+  botBubble: { backgroundColor: "#5664F5", alignSelf: "flex-start" },
+  bubbleText: { color: "#fff" },
+
+  inputRow: {
     flexDirection: "row",
     padding: 8,
     borderTopWidth: 1,
-    borderTopColor: "#ccc",
+    borderColor: "#ccc",
     backgroundColor: "#fff",
   },
-  textInput: {
+  input: {
     flex: 1,
-    backgroundColor: "#F3F4F6",
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    marginRight: 8,
-  },
-  sendButton: {
-    backgroundColor: "#2563EB",
-    borderRadius: 8,
+    backgroundColor: "#eee",
+    borderRadius: 20,
     paddingHorizontal: 16,
-    justifyContent: "center",
+    height: 40,
+  },
+  sendBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#fff",
     alignItems: "center",
+    justifyContent: "center",
+    marginLeft: 8,
   },
-  sendButtonText: {
-    color: "#fff",
-    fontWeight: "bold",
+
+  overlay: {
+    position: "absolute",
+    top: 0,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: "#000",
   },
+
+  sidebar: {
+    position: "absolute",
+    top: 0,
+    bottom: 0,
+    left: 0,
+    width: SIDEBAR_WIDTH,
+    backgroundColor: "#fafafa",
+    borderRightWidth: 1,
+    borderColor: "#ccc",
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 8,
+    paddingTop: 12,
+  },
+  sidebarHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderColor: "#ccc",
+  },
+  closeBtn: { padding: 4 },
+  divider: { height: 1, backgroundColor: "#ccc", marginHorizontal: 16 },
+
+  menuItem: { flexDirection: "row", alignItems: "center", paddingHorizontal: 20 },
+  menuIcon: { marginRight: 16 },
+  menuText: { fontSize: 18, color: "#333" },
 });
