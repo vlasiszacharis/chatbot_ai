@@ -1,6 +1,6 @@
 # Theater Box App
 
-A React Native (Expo) PWA for chatting and theater info. Live PWA: [https://chatbotaiaueb.netlify.app/](https://chatbotaiaueb.netlify.app/)
+A React Native (Expo) PWA for chatting and theater info. Live PWA(Only mobile): [https://chatbotaiaueb.netlify.app/](https://chatbotaiaueb.netlify.app/)
 
 ## Installation & Running App
 
