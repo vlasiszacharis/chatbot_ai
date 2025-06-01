@@ -4,7 +4,7 @@ import { View, Text, StyleSheet } from "react-native";
 export default function BookingDetailsScreen() {
   const defaultTicket = {
     event: "«Ρωμαιος Και Ιουλιετα»",
-    venue: "Θέατρο Ακροπόλ",
+    venue: "Θέατρο Αυλαία",
     date: "15 Νοεμβριου 2025",
     time: "21:00",
     seat: "Σειρά Α, Θέση 12",

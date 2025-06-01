@@ -111,6 +111,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     padding: 10,
     marginBottom: 16,
+    fontSize: 16,
   },
   button: {
     borderRadius: 8,
