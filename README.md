@@ -1,6 +1,10 @@
-# Theater Box Office App
+# Theater Box App
 
+A React Native (Expo) PWA for chatting and theater info. Live PWA: [https://chatbotaiaueb.netlify.app/](https://chatbotaiaueb.netlify.app/)
 
-2. Navigate to the project folder: `cd chatbot_ai`
-3. Install dependencies: `npm install`
-4. Run the app: `npm run web`
+## Installation & Running App
+
+1. npm install
+2. npm run web
+
+## LLM Integration & Backend Overview
