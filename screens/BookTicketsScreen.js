@@ -35,13 +35,21 @@ export default function BookTicketsScreen({ navigation }) {
 
   const PerformanceCard = ({ id }) => {
     const perf = performances[id];
+
+    let showTime = "";
+    const titleLower = perf.title.toLowerCase();
+    if (titleLower.includes("άμλετ")) {
+      showTime = "18:00";
+    } else if (titleLower.includes("ρωμαίος")) {
+      showTime = "21:00";
+    } else {
+      showTime = "-:--";
+    }
+
     return (
       <View style={styles.card}>
         <Text style={[styles.cardTitle, { fontSize: sizes.cardTitle }]}>{`${id} Αίθουσα: ${perf.title}`}</Text>
-        <Text style={[styles.cardSubtitle, { fontSize: sizes.cardSubtitle }]}>Πρωινή: 2:00 μ.μ.</Text>
-        <Text style={[styles.cardSubtitle, { fontSize: sizes.cardSubtitle }]}>
-          Βραδινή: {id === "A" ? "7:00 μ.μ." : "8:00 μ.μ."}
-        </Text>
+        <Text style={[styles.cardSubtitle, { fontSize: sizes.cardSubtitle }]}>Ώρα: {showTime}</Text>
         <TouchableOpacity style={[styles.infoButton, { paddingVertical: 8 }]} onPress={() => setSelected(id)}>
           <Text style={[styles.infoButtonText, { fontSize: sizes.buttonText }]}>Περισσότερες Πληροφορίες</Text>
         </TouchableOpacity>
@@ -110,8 +118,8 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   cardTitle: { fontWeight: "700", marginBottom: 4, color: "#1F2937" },
-  cardSubtitle: { color: "#4B5563", marginBottom: 2 },
-  infoButton: { marginTop: 12, backgroundColor: "#3B82F6", borderRadius: 8, alignItems: "center" },
+  cardSubtitle: { color: "#4B5563", marginBottom: 8 },
+  infoButton: { backgroundColor: "#3B82F6", borderRadius: 8, alignItems: "center" },
   infoButtonText: { color: "#FFFFFF", fontWeight: "600" },
 
   detailsContainer: { padding: 20, alignItems: "center", backgroundColor: "#fff" },

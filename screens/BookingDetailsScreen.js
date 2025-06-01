@@ -5,8 +5,8 @@ export default function BookingDetailsScreen() {
   const defaultTicket = {
     event: "«Ρωμαιος Και Ιουλιετα»",
     venue: "Θέατρο Ακροπόλ",
-    date: "15 Ιουνίου 2025",
-    time: "20:30",
+    date: "15 Νοεμβριου 2025",
+    time: "21:00",
     seat: "Σειρά Α, Θέση 12",
     price: "€25",
     bookingId: "ABC123456",
@@ -20,7 +20,6 @@ export default function BookingDetailsScreen() {
       if (stored) {
         const { date, time, performance } = JSON.parse(stored);
 
-        // Αν υπάρχει στο localStorage, αντικαθιστούμε μόνο event, date και time.
         setTicket((prev) => ({
           ...prev,
           event: performance ? `«${performance}»` : prev.event,
