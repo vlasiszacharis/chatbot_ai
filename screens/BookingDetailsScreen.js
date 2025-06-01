@@ -1,8 +1,8 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet } from "react-native";
 
 export default function BookingDetailsScreen() {
-  const ticket = {
+  const defaultTicket = {
     event: "«Ρωμαιος Και Ιουλιετα»",
     venue: "Θέατρο Ακροπόλ",
     date: "15 Ιουνίου 2025",
@@ -11,6 +11,27 @@ export default function BookingDetailsScreen() {
     price: "€25",
     bookingId: "ABC123456",
   };
+
+  const [ticket, setTicket] = useState(defaultTicket);
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("bookingConfirmation");
+      if (stored) {
+        const { date, time, performance } = JSON.parse(stored);
+
+        // Αν υπάρχει στο localStorage, αντικαθιστούμε μόνο event, date και time.
+        setTicket((prev) => ({
+          ...prev,
+          event: performance ? `«${performance}»` : prev.event,
+          date: date || prev.date,
+          time: time || prev.time,
+        }));
+      }
+    } catch (err) {
+      console.warn("Αποτυχία ανάγνωσης από localStorage:", err);
+    }
+  }, []);
 
   return (
     <View style={styles.screenContainer}>

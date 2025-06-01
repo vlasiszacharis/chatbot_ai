@@ -1,5 +1,9 @@
 import React, { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, SafeAreaView } from "react-native";
+import { FaTheaterMasks } from "react-icons/fa";
+
+// Εισάγουμε το SweetAlert2 για web
+import Swal from "sweetalert2";
 
 export default function InitialScreen({ navigation }) {
   const [userName, setUserName] = useState("");
@@ -7,43 +11,62 @@ export default function InitialScreen({ navigation }) {
   const [phone, setPhone] = useState("");
 
   const onSignUp = () => {
+    if (!userName.trim()) {
+      Swal.fire({
+        icon: "warning",
+        title: "Σφάλμα",
+        text: "Παρακαλώ συμπληρώστε το όνομα για να συνεχίσετε.",
+        confirmButtonText: "Εντάξει",
+        customClass: {
+          popup: "w-40 p-2",
+          title: "text-lg font-bold text-[#4C66DF]",
+          htmlContainer: "text-sm",
+        },
+      });
+      return;
+    }
+
     navigation.navigate("Chat", { userName });
   };
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Theater Box</Text>
+        <FaTheaterMasks size={28} color="#5664F5" />
+        <Text style={styles.headerTitle}>Theater AI</Text>
       </View>
 
       <View style={styles.form}>
-        <Text style={styles.label}>Όνομα</Text>
-        <TextInput style={styles.input} placeholder="Enter your name" value={userName} onChangeText={setUserName} />
+        <Text style={styles.label}>
+          Όνομα
+          <Text style={styles.required}> *</Text>
+        </Text>
+        <TextInput style={styles.input} placeholder="Εισάγετε το όνομά σας" value={userName} onChangeText={setUserName} />
 
         <Text style={styles.label}>Email</Text>
         <TextInput
           style={styles.input}
-          placeholder="Enter your email"
+          placeholder="Εισάγετε το email σας"
           keyboardType="email-address"
           value={email}
           onChangeText={setEmail}
         />
 
-        <Text style={styles.label}>Phone</Text>
+        <Text style={styles.label}>Τηλέφωνο</Text>
         <TextInput
           style={styles.input}
-          placeholder="Enter your phone number"
+          placeholder="Εισάγετε τον αριθμό τηλεφώνου σας"
           keyboardType="phone-pad"
           value={phone}
           onChangeText={setPhone}
         />
 
         <TouchableOpacity style={[styles.button, styles.googleBtn]}>
-          <Text style={styles.googleText}>Sign in with Google</Text>
+          <Text style={styles.googleText}>Σύνδεση με Google</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={[styles.button, styles.signUpBtn]} onPress={onSignUp}>
-          <Text style={styles.signUpText}>Sign Up</Text>
+          <Text style={styles.signUpText}>Εγγραφή</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -77,6 +100,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#555",
     marginBottom: 4,
+    flexDirection: "row",
+  },
+  required: {
+    color: "red",
   },
   input: {
     borderWidth: 1,
@@ -92,7 +119,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   googleBtn: {
-    backgroundColor: "#5664F5",
+    backgroundColor: "#4285F4",
   },
   googleText: {
     color: "#fff",

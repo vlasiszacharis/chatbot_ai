@@ -13,6 +13,8 @@ import {
 } from "react-native";
 import { v4 as uuidv4 } from "uuid";
 import { Ionicons } from "@expo/vector-icons";
+import { FaTheaterMasks } from "react-icons/fa";
+import { RiRobot3Fill } from "react-icons/ri";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 const SIDEBAR_WIDTH = Math.min(SCREEN_WIDTH * 0.75, 300);
@@ -41,24 +43,46 @@ export default function ChatScreen({ navigation, route }) {
   };
 
   const sendMessage = async () => {
-    if (!input.trim() || sending) return;
-    const text = input.trim();
+    const trimmedInput = input.trim();
+    if (!trimmedInput || sending) return;
+
+    const userText = trimmedInput;
     const now = new Date();
-    setMessages((m) => [...m, { id: uuidv4(), text, sender: "user", timestamp: now }]);
+    setMessages((m) => [...m, { id: uuidv4(), text: userText, sender: "user", timestamp: now }]);
     setInput("");
     setSending(true);
+
     try {
       const res = await fetch(API_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           session_id: sessionId,
-          message: text,
+          message: userText,
         }),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const { reply } = await res.json();
+
       setMessages((m) => [...m, { id: uuidv4(), text: reply, sender: "bot", timestamp: new Date() }]);
+
+      if (userText === "Επιβεβαιωση Κρατησης") {
+        const dateMatch = reply.match(/(\d{1,2}\/\d{1,2}\/\d{4})/);
+        const timeMatch = reply.match(/(\d{1,2}:\d{2})/);
+        const performanceMatch = reply.match(/«([^»]+)»/);
+
+        const date = dateMatch ? dateMatch[1] : "";
+        const time = timeMatch ? timeMatch[1] : "";
+        const performance = performanceMatch ? performanceMatch[1] : "";
+
+        const bookingData = { date, time, performance };
+
+        try {
+          localStorage.setItem("bookingConfirmation", JSON.stringify(bookingData));
+        } catch (err) {
+          console.warn("Αποτυχία αποθήκευσης στο localStorage:", err);
+        }
+      }
     } catch {
       setMessages((m) => [...m, { id: uuidv4(), text: "Σφάλμα σύνδεσης.", sender: "bot", timestamp: new Date() }]);
     } finally {
@@ -97,6 +121,7 @@ export default function ChatScreen({ navigation, route }) {
                 <View style={styles.messageHeader}>
                   {item.sender === "bot" ? (
                     <View style={styles.botHeaderLeft}>
+                      <RiRobot3Fill size={20} color="#5664F5" style={styles.robotIcon} />
                       <Text style={styles.botTitle}>Bot</Text>
                     </View>
                   ) : (
@@ -136,6 +161,7 @@ export default function ChatScreen({ navigation, route }) {
 
       <Animated.View style={[styles.sidebar, { transform: [{ translateX: sidebarX }] }]}>
         <View style={styles.sidebarHeader}>
+          <FaTheaterMasks size={25} color="#5664F5" />
           <TouchableOpacity onPress={() => toggleSidebar(false)} style={styles.closeBtn}>
             <Ionicons name="close" size={28} color="black" />
           </TouchableOpacity>
