@@ -19,7 +19,7 @@ import { RiRobot3Fill } from "react-icons/ri";
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 const SIDEBAR_WIDTH = Math.min(SCREEN_WIDTH * 0.75, 300);
 
-const API_URL = "https://0573-34-44-99-255.ngrok-free.app/chat";
+const API_URL = "https://8183-34-45-200-214.ngrok-free.app/chat";
 
 export default function ChatScreen({ navigation, route }) {
   const { userName = "", userSurname = "", sessionId = "my_test_session_123" } = route.params || {};
